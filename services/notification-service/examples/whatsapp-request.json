@@ -1,0 +1,7 @@
+{
+  "recipient": "+919876543210",
+  "template_id": "welcome_message",
+  "template_data": {
+    "name": "John Doe"
+  }
+}

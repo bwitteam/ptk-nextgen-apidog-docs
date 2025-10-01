@@ -1,0 +1,110 @@
+openapi: 3.1.0
+info:
+  title: Notification Service API
+  version: 1.0.0
+  description: Multi-channel notification delivery (Email, WhatsApp, SMS)
+
+servers:
+  - url: https://api-dev.ptk.com
+    description: Development
+  - url: https://api-staging.ptk.com
+    description: Staging
+  - url: https://api.ptk.com
+    description: Production
+
+tags:
+  - name: Email
+  - name: WhatsApp
+  - name: Status
+
+paths:
+  /api/v1/notifications/email:
+    post:
+      summary: Send Email Notification
+      tags: [Email]
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmailNotification'
+      responses:
+        '202':
+          description: Accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationResponse'
+
+  /api/v1/notifications/whatsapp:
+    post:
+      summary: Send WhatsApp Message
+      tags: [WhatsApp]
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WhatsAppNotification'
+      responses:
+        '202':
+          description: Accepted
+
+  /api/v1/notifications/{id}:
+    get:
+      summary: Get Notification Status
+      tags: [Status]
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Success
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+  
+  schemas:
+    EmailNotification:
+      type: object
+      required: [recipient, subject]
+      properties:
+        recipient:
+          type: string
+          format: email
+        subject:
+          type: string
+        content:
+          type: string
+    
+    WhatsAppNotification:
+      type: object
+      required: [recipient, template_id]
+      properties:
+        recipient:
+          type: string
+        template_id:
+          type: string
+    
+    NotificationResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+        status:
+          type: string
+        celery_task_id:
+          type: string

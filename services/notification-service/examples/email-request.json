@@ -1,0 +1,5 @@
+{
+  "recipient": "user@example.com",
+  "subject": "Welcome to PTK!",
+  "content": "<h1>Welcome!</h1><p>Thank you for joining us.</p>"
+}

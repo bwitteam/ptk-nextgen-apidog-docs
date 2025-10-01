@@ -1,0 +1,8 @@
+{
+  "name": "Development",
+  "base_url": "https://api-dev.ptk.com",
+  "variables": {
+    "api_key": "sk_dev_test_key",
+    "test_email": "test@example.com"
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "name": "Production",
+  "base_url": "https://api.ptk.com",
+  "variables": {
+    "api_key": "{{PROD_API_KEY}}",
+    "test_email": "{{TEST_EMAIL}}"
+  }
+}
