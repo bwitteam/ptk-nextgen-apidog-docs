@@ -1,8 +1,6 @@
 {
-  "name": "Production",
-  "base_url": "https://api.ptk.com",
-  "variables": {
-    "api_key": "{{PROD_API_KEY}}",
-    "test_email": "{{TEST_EMAIL}}"
-  }
+  "name": "production",
+  "baseUrl": "https://kubeslave.appjii.net/notification-service",
+  "lastUpdated": "2025-10-01T02:26:07Z",
+  "commit": "6def69643555a171bff693687577d0b89ef02dc8"
 }
