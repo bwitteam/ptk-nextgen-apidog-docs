@@ -1,12 +1,651 @@
 openapi: 3.1.0
 info:
-  title: Notification Service API
-  description: Microservice for handling notifications
-  version: 1.0.0
+  title: notification-service
+  description: Production-grade multi-channel notification service with chain jobs
+  version: 2.0.0
 paths:
+  /api/v1/:
+    get:
+      tags:
+      - Health
+      summary: Health Check
+      description: Basic health check
+      operationId: health_check_api_v1__get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+  /api/v1/ready:
+    get:
+      tags:
+      - Health
+      summary: Readiness Check
+      description: Readiness check including dependencies
+      operationId: readiness_check_api_v1_ready_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+  /api/v1/live:
+    get:
+      tags:
+      - Health
+      summary: Liveness Check
+      description: Liveness check
+      operationId: liveness_check_api_v1_live_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+  /api/v1/notifications/:
+    post:
+      tags:
+      - Notifications v1
+      summary: Create Notification
+      description: Create a new notification
+      operationId: create_notification_api_v1_notifications__post
+      security:
+      - APIKeyHeader: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NotificationCreate'
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    get:
+      tags:
+      - Notifications v1
+      summary: List Notifications
+      description: List notifications with filters
+      operationId: list_notifications_api_v1_notifications__get
+      security:
+      - APIKeyHeader: []
+      parameters:
+      - name: skip
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+          title: Skip
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 1000
+          minimum: 1
+          default: 100
+          title: Limit
+      - name: status
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - $ref: '#/components/schemas/NotificationStatus'
+          - type: 'null'
+          title: Status
+      - name: channel
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - $ref: '#/components/schemas/NotificationChannel'
+          - type: 'null'
+          title: Channel
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/NotificationResponse'
+                title: Response List Notifications Api V1 Notifications  Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/notifications/bulk:
+    post:
+      tags:
+      - Notifications v1
+      summary: Create Bulk Notifications
+      description: Create multiple notifications in bulk
+      operationId: create_bulk_notifications_api_v1_notifications_bulk_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NotificationBulkCreate'
+        required: true
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationBulkResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+      - APIKeyHeader: []
+  /api/v1/notifications/{notification_id}:
+    get:
+      tags:
+      - Notifications v1
+      summary: Get Notification
+      description: Get notification by ID
+      operationId: get_notification_api_v1_notifications__notification_id__get
+      security:
+      - APIKeyHeader: []
+      parameters:
+      - name: notification_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Notification Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/notifications/stats/overview:
+    get:
+      tags:
+      - Notifications v1
+      summary: Get Statistics
+      description: Get notification statistics
+      operationId: get_statistics_api_v1_notifications_stats_overview_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+      security:
+      - APIKeyHeader: []
+  /api/v1/chains/onboarding:
+    post:
+      tags:
+      - Chain Jobs v1
+      summary: Trigger Onboarding Chain
+      description: 'Trigger user onboarding chain workflow
+
+        Sends: Welcome Email -> SMS Reminder -> WhatsApp Tips'
+      operationId: trigger_onboarding_chain_api_v1_chains_onboarding_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OnboardingRequest'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+      - APIKeyHeader: []
+  /api/v1/chains/order-processing:
+    post:
+      tags:
+      - Chain Jobs v1
+      summary: Trigger Order Chain
+      description: 'Trigger order processing chain workflow
+
+        Sends: Order Confirmation -> Payment Success -> Shipping Update'
+      operationId: trigger_order_chain_api_v1_chains_order_processing_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderProcessingRequest'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+      - APIKeyHeader: []
+  /api/v1/chains/broadcast:
+    post:
+      tags:
+      - Chain Jobs v1
+      summary: Trigger Broadcast Chain
+      description: 'Trigger broadcast announcement chain (parallel processing)
+
+        Sends to multiple users across all channels simultaneously'
+      operationId: trigger_broadcast_chain_api_v1_chains_broadcast_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BroadcastRequest'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+      - APIKeyHeader: []
+  /api/v1/chains/critical-alert:
+    post:
+      tags:
+      - Chain Jobs v1
+      summary: Trigger Critical Alert Chain
+      description: 'Trigger critical alert with automatic fallback
+
+        Tries: Email -> SMS -> Admin Alert'
+      operationId: trigger_critical_alert_chain_api_v1_chains_critical_alert_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CriticalAlertRequest'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+      - APIKeyHeader: []
+  /api/v1/chains/status/{chain_id}:
+    get:
+      tags:
+      - Chain Jobs v1
+      summary: Get Chain Status
+      description: Get status of a chain job
+      operationId: get_chain_status_api_v1_chains_status__chain_id__get
+      security:
+      - APIKeyHeader: []
+      parameters:
+      - name: chain_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Chain Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/chains/active:
+    get:
+      tags:
+      - Chain Jobs v1
+      summary: Get Active Chains
+      description: Get all active chain jobs
+      operationId: get_active_chains_api_v1_chains_active_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+      security:
+      - APIKeyHeader: []
+  /api/v1/webhooks/postmark:
+    post:
+      tags:
+      - Webhooks v1
+      summary: Postmark Webhook
+      description: Handle Postmark webhook events
+      operationId: postmark_webhook_api_v1_webhooks_postmark_post
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+  /api/v1/webhooks/twilio:
+    post:
+      tags:
+      - Webhooks v1
+      summary: Twilio Webhook
+      description: Handle Twilio webhook events
+      operationId: twilio_webhook_api_v1_webhooks_twilio_post
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+  /api/v1/webhooks/ses:
+    post:
+      tags:
+      - Webhooks v1
+      summary: Ses Webhook
+      description: Handle AWS SES webhook events (SNS)
+      operationId: ses_webhook_api_v1_webhooks_ses_post
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+  /api/v1/generic-chains/execute:
+    post:
+      tags:
+      - Generic Chains
+      - Generic Chain Workflows
+      summary: Execute notification chain
+      description: Execute a generic notification chain with automatic routing
+      operationId: execute_chain_api_v1_generic_chains_execute_post
+      security:
+      - APIKeyHeader: []
+      parameters:
+      - name: x-request-id
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Request-Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenericChainRequest'
+      responses:
+        '202':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChainResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/generic-chains/sequence:
+    post:
+      tags:
+      - Generic Chains
+      - Generic Chain Workflows
+      summary: Send sequential notifications
+      description: Send notifications one after another
+      operationId: send_sequence_api_v1_generic_chains_sequence_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenericChainRequest'
+        required: true
+      responses:
+        '202':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+      - APIKeyHeader: []
+  /api/v1/generic-chains/broadcast:
+    post:
+      tags:
+      - Generic Chains
+      - Generic Chain Workflows
+      summary: Send parallel notifications
+      description: Send notifications all at once
+      operationId: send_broadcast_api_v1_generic_chains_broadcast_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenericChainRequest'
+        required: true
+      responses:
+        '202':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+      - APIKeyHeader: []
+  /api/v1/generic-chains/template:
+    post:
+      tags:
+      - Generic Chains
+      - Generic Chain Workflows
+      summary: Execute workflow template
+      description: Execute pre-configured workflow template
+      operationId: execute_template_api_v1_generic_chains_template_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WorkflowTemplateRequest'
+        required: true
+      responses:
+        '202':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+      - APIKeyHeader: []
+  /api/v1/generic-chains/status/{chain_id}:
+    get:
+      tags:
+      - Generic Chains
+      - Generic Chain Workflows
+      summary: Get chain status
+      description: Get detailed status of a chain execution
+      operationId: get_chain_status_endpoint_api_v1_generic_chains_status__chain_id__get
+      security:
+      - APIKeyHeader: []
+      parameters:
+      - name: chain_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Chain Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/generic-chains/job/{job_id}:
+    get:
+      tags:
+      - Generic Chains
+      - Generic Chain Workflows
+      summary: Get Celery job status
+      description: Get raw Celery task status
+      operationId: get_job_status_api_v1_generic_chains_job__job_id__get
+      security:
+      - APIKeyHeader: []
+      parameters:
+      - name: job_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Job Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/generic-chains/active:
+    get:
+      tags:
+      - Generic Chains
+      - Generic Chain Workflows
+      summary: Get active chains
+      description: Get all currently executing chains
+      operationId: get_active_chains_api_v1_generic_chains_active_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+      security:
+      - APIKeyHeader: []
+  /api/v1/generic-chains/templates:
+    get:
+      tags:
+      - Generic Chains
+      - Generic Chain Workflows
+      summary: List available templates
+      description: Get list of all available workflow templates
+      operationId: list_templates_api_v1_generic_chains_templates_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+      security:
+      - APIKeyHeader: []
+  /api/v1/generic-chains/cancel/{job_id}:
+    delete:
+      tags:
+      - Generic Chains
+      - Generic Chain Workflows
+      summary: Cancel chain execution
+      description: Attempt to cancel a running chain
+      operationId: cancel_chain_api_v1_generic_chains_cancel__job_id__delete
+      security:
+      - APIKeyHeader: []
+      parameters:
+      - name: job_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Job Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
   /:
     get:
+      tags:
+      - Root
       summary: Root
+      description: API root with version information and UTC timestamp
       operationId: root__get
       responses:
         '200':
@@ -14,13 +653,516 @@ paths:
           content:
             application/json:
               schema: {}
-  /health:
+  /api/version:
     get:
-      summary: Health
-      operationId: health_health_get
+      tags:
+      - API Info
+      summary: Get Api Version Info
+      description: Get detailed API version information
+      operationId: get_api_version_info_api_version_get
       responses:
         '200':
           description: Successful Response
           content:
             application/json:
               schema: {}
+components:
+  schemas:
+    BroadcastRequest:
+      properties:
+        announcement:
+          additionalProperties:
+            type: string
+          type: object
+          title: Announcement
+        recipient_list:
+          items:
+            additionalProperties:
+              anyOf:
+              - type: string
+              - type: 'null'
+            type: object
+          type: array
+          title: Recipient List
+      type: object
+      required:
+      - announcement
+      - recipient_list
+      title: BroadcastRequest
+    ChainResponse:
+      properties:
+        job_id:
+          type: string
+          title: Job Id
+        chain_id:
+          type: string
+          title: Chain Id
+        mode:
+          type: string
+          title: Mode
+        total_notifications:
+          type: integer
+          title: Total Notifications
+        status:
+          type: string
+          title: Status
+        queued_at_utc:
+          type: string
+          title: Queued At Utc
+        monitor_url:
+          type: string
+          title: Monitor Url
+      type: object
+      required:
+      - job_id
+      - chain_id
+      - mode
+      - total_notifications
+      - status
+      - queued_at_utc
+      - monitor_url
+      title: ChainResponse
+      description: Chain execution response
+    CriticalAlertRequest:
+      properties:
+        user_id:
+          type: string
+          title: User Id
+        message:
+          type: string
+          title: Message
+        contacts:
+          additionalProperties:
+            type: string
+          type: object
+          title: Contacts
+      type: object
+      required:
+      - user_id
+      - message
+      - contacts
+      title: CriticalAlertRequest
+    GenericChainRequest:
+      properties:
+        notifications:
+          items:
+            $ref: '#/components/schemas/NotificationDefinition'
+          type: array
+          maxItems: 100
+          minItems: 1
+          title: Notifications
+          description: List of notifications (max 100)
+        execution_mode:
+          type: string
+          enum:
+          - sequential
+          - parallel
+          title: Execution Mode
+          description: 'Execution mode: sequential or parallel'
+          default: sequential
+        callback_data:
+          anyOf:
+          - type: object
+          - type: 'null'
+          title: Callback Data
+          description: Optional callback metadata
+        idempotency_key:
+          anyOf:
+          - type: string
+            maxLength: 100
+          - type: 'null'
+          title: Idempotency Key
+          description: Optional idempotency key for duplicate prevention
+      type: object
+      required:
+      - notifications
+      title: GenericChainRequest
+      description: Generic chain request with validation
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    NotificationBulkCreate:
+      properties:
+        notifications:
+          items:
+            $ref: '#/components/schemas/NotificationCreate'
+          type: array
+          maxItems: 1000
+          minItems: 1
+          title: Notifications
+      type: object
+      required:
+      - notifications
+      title: NotificationBulkCreate
+    NotificationBulkResponse:
+      properties:
+        total:
+          type: integer
+          title: Total
+        queued:
+          type: integer
+          title: Queued
+        failed:
+          type: integer
+          title: Failed
+        notification_ids:
+          items:
+            type: string
+          type: array
+          title: Notification Ids
+      type: object
+      required:
+      - total
+      - queued
+      - failed
+      - notification_ids
+      title: NotificationBulkResponse
+    NotificationChannel:
+      type: string
+      enum:
+      - email
+      - sms
+      - whatsapp
+      - push
+      - slack
+      title: NotificationChannel
+    NotificationChannelEnum:
+      type: string
+      enum:
+      - email
+      - sms
+      - whatsapp
+      title: NotificationChannelEnum
+    NotificationCreate:
+      properties:
+        channel:
+          $ref: '#/components/schemas/NotificationChannelEnum'
+        recipient:
+          type: string
+          title: Recipient
+        subject:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Subject
+        content:
+          type: string
+          title: Content
+        priority:
+          allOf:
+          - $ref: '#/components/schemas/NotificationPriorityEnum'
+          default: normal
+        metadata:
+          anyOf:
+          - type: object
+          - type: 'null'
+          title: Metadata
+        template_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Template Id
+        scheduled_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Scheduled At
+        max_retries:
+          type: integer
+          maximum: 10.0
+          minimum: 0.0
+          title: Max Retries
+          default: 3
+      type: object
+      required:
+      - channel
+      - recipient
+      - content
+      title: NotificationCreate
+    NotificationDefinition:
+      properties:
+        channel:
+          type: string
+          enum:
+          - email
+          - sms
+          - whatsapp
+          - push
+          title: Channel
+          description: Notification channel
+        recipient:
+          type: string
+          maxLength: 255
+          minLength: 3
+          title: Recipient
+          description: Recipient address (email/phone)
+        subject:
+          anyOf:
+          - type: string
+            maxLength: 500
+          - type: 'null'
+          title: Subject
+          description: Subject line (required for email)
+        content:
+          type: string
+          maxLength: 10000
+          minLength: 1
+          title: Content
+          description: Notification content
+        priority:
+          anyOf:
+          - type: string
+            enum:
+            - low
+            - normal
+            - high
+            - critical
+          - type: 'null'
+          title: Priority
+          description: Notification priority
+          default: normal
+        metadata:
+          anyOf:
+          - type: object
+          - type: 'null'
+          title: Metadata
+          description: Additional metadata
+      type: object
+      required:
+      - channel
+      - recipient
+      - content
+      title: NotificationDefinition
+      description: Single notification definition with validation
+    NotificationPriorityEnum:
+      type: string
+      enum:
+      - low
+      - normal
+      - high
+      - critical
+      title: NotificationPriorityEnum
+    NotificationResponse:
+      properties:
+        id:
+          type: string
+          title: Id
+        channel:
+          $ref: '#/components/schemas/NotificationChannelEnum'
+        recipient:
+          type: string
+          title: Recipient
+        subject:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Subject
+        content:
+          type: string
+          title: Content
+        status:
+          $ref: '#/components/schemas/NotificationStatusEnum'
+        priority:
+          $ref: '#/components/schemas/NotificationPriorityEnum'
+        metadata_notification:
+          anyOf:
+          - type: object
+          - type: 'null'
+          title: Metadata Notification
+        template_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Template Id
+        scheduled_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Scheduled At
+        sent_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Sent At
+        failed_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Failed At
+        retry_count:
+          type: integer
+          title: Retry Count
+        max_retries:
+          type: integer
+          title: Max Retries
+        error_message:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Error Message
+        provider:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Provider
+        provider_message_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Provider Message Id
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+        updated_at:
+          type: string
+          format: date-time
+          title: Updated At
+      type: object
+      required:
+      - id
+      - channel
+      - recipient
+      - subject
+      - content
+      - status
+      - priority
+      - template_id
+      - scheduled_at
+      - sent_at
+      - failed_at
+      - retry_count
+      - max_retries
+      - error_message
+      - provider
+      - provider_message_id
+      - created_at
+      - updated_at
+      title: NotificationResponse
+    NotificationStatus:
+      type: string
+      enum:
+      - pending
+      - queued
+      - processing
+      - sent
+      - failed
+      - retrying
+      - cancelled
+      title: NotificationStatus
+    NotificationStatusEnum:
+      type: string
+      enum:
+      - pending
+      - queued
+      - processing
+      - sent
+      - failed
+      - retrying
+      title: NotificationStatusEnum
+    OnboardingRequest:
+      properties:
+        user_email:
+          type: string
+          format: email
+          title: User Email
+        user_phone:
+          type: string
+          title: User Phone
+        user_name:
+          type: string
+          title: User Name
+      type: object
+      required:
+      - user_email
+      - user_phone
+      - user_name
+      title: OnboardingRequest
+    OrderProcessingRequest:
+      properties:
+        order_id:
+          type: string
+          title: Order Id
+        customer_email:
+          type: string
+          format: email
+          title: Customer Email
+        customer_phone:
+          type: string
+          title: Customer Phone
+        order_details:
+          type: object
+          title: Order Details
+      type: object
+      required:
+      - order_id
+      - customer_email
+      - customer_phone
+      - order_details
+      title: OrderProcessingRequest
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
+    WorkflowTemplateRequest:
+      properties:
+        template_name:
+          type: string
+          title: Template Name
+          description: Template name (user_onboarding, order_confirmation)
+        template_params:
+          type: object
+          title: Template Params
+          description: Template parameters
+        execution_mode:
+          type: string
+          enum:
+          - sequential
+          - parallel
+          title: Execution Mode
+          description: Execution mode
+          default: sequential
+        idempotency_key:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Idempotency Key
+          description: Optional idempotency key
+      type: object
+      required:
+      - template_name
+      - template_params
+      title: WorkflowTemplateRequest
+      description: Workflow template execution request
+  securitySchemes:
+    APIKeyHeader:
+      type: apiKey
+      in: header
+      name: X-API-Key

@@ -1,6 +1,6 @@
 {
   "name": "production",
   "baseUrl": "https://kubeslave.appjii.net/notification-service",
-  "lastUpdated": "2025-10-01T03:31:31Z",
-  "commit": "754480e5b5337aeaf43043e233fd2994edc05dc6"
+  "lastUpdated": "2025-10-07T04:41:52Z",
+  "commit": "982d6e4b4d6d3ae8e277957b7709b5e97ce73673"
 }
