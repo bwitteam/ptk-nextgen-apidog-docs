@@ -1,9 +1,9 @@
 {
   "name": "production",
   "baseUrl": "https://kubeslave.appjii.net/notification-service",
-  "lastUpdated": "2025-10-07T12:08:48Z",
-  "commit": "0adaa49053993b8645091d2e38dbdc0f9ffbb460",
+  "lastUpdated": "2025-10-07T12:27:59Z",
+  "commit": "207c7b125b0ef521e9044ef0d78bf5649b53bced",
   "branch": "main",
   "repository": "bwitteam/notification-service",
-  "workflow": "18312035553"
+  "workflow": "18312615925"
 }
